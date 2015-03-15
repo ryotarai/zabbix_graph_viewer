@@ -23,7 +23,7 @@ var Viewer = React.createClass({
   },
   addGraph: function(items) {
     this.setState({
-      graphs: this.state.graphs.concat({items: items}),
+      graphs: [{items: items}].concat(this.state.graphs),
     });
   },
   handleUpdatedPeriod: function(period) {
@@ -33,12 +33,16 @@ var Viewer = React.createClass({
   },
   render: function() {
     return (
-      <div>
-        <h1>Viewer</h1>
-        <PermaLink state={this.state} />
-        <TimeSelector onPeriodUpdated={this.handleUpdatedPeriod} />
-        <ItemSelectorForm hosts={this.state.hosts} addGraph={this.addGraph} />
-        <Graphs graphs={this.state.graphs} zabbixUrl={this.props.zabbixUrl} periodHour={this.state.periodHour} />
+      <div className="row">
+        <div className="col-md-3">
+          <TimeSelector onPeriodUpdated={this.handleUpdatedPeriod} />
+          <hr />
+          <ItemSelectorForm hosts={this.state.hosts} addGraph={this.addGraph} />
+        </div>
+        <div className="col-md-9">
+          <h1>Zabbix Graph Viewer</h1>
+          <Graphs graphs={this.state.graphs} zabbixUrl={this.props.zabbixUrl} periodHour={this.state.periodHour} />
+        </div>
       </div>
     );
   }
@@ -51,8 +55,8 @@ var PermaLink = React.createClass({
       periodHour: this.props.state.periodHour,
     });
     return (
-      <form>
-        <input value={link} />
+      <form className="form-inline">
+        <input value={link} className="form-control" />
       </form>
     );
   },
@@ -66,9 +70,11 @@ var TimeSelector = React.createClass({
   },
   render: function() {
     return (
-      <form onSubmit={this.handleSubmit} >
-        <input type="number" placeholder="Period (hour)" ref="period" />
-        <input type="submit" value="Update" />
+      <form onSubmit={this.handleSubmit} className="form-inline">
+        <div className="form-group">
+          <input type="number" placeholder="Period (default: 1 hour)" className="form-control" ref="period" />
+        </div>
+        <input type="submit" value="Update" className="btn btn-default" />
       </form>
     );
   },
@@ -150,7 +156,7 @@ var ItemSelectorForm = React.createClass({
       <form onSubmit={this.handleSubmit}>
         <HostSelector hosts={this.props.hosts} onHostsSelected={this.onHostsSelected} />
         <ItemSelector items={this.state.availableItems} onItemsSelected={this.onItemsSelected} />
-        <input type="submit" value="Add Graph" />
+        <input type="submit" value="Add Graph" className="btn btn-primary" />
       </form>
     );
   }
@@ -162,7 +168,7 @@ var TextFilter = React.createClass({
   },
   render: function() {
     return (
-      <input onChange={this.handleChange} />
+      <input onChange={this.handleChange} className="form-control" placeholder="Filter" />
     );
   }
 });
@@ -204,9 +210,9 @@ var HostSelector = React.createClass({
       );
     });
     return (
-      <div>
+      <div className="form-group">
         <TextFilter onFilterChanged={this.handleFilterChanged} />
-        <select size="10" onChange={this.handleChange} multiple>
+        <select size="10" onChange={this.handleChange} className="form-control" multiple>
           {hostOptions}
         </select>
       </div>
@@ -253,9 +259,9 @@ var ItemSelector = React.createClass({
       );
     });
     return (
-      <div>
+      <div className="form-group">
         <TextFilter onFilterChanged={this.handleFilterChanged} />
-        <select size="10" multiple onChange={this.handleChange}>
+        <select size="10" multiple onChange={this.handleChange} className="form-control">
           {itemOptions}
         </select>
       </div>

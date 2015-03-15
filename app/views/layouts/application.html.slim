@@ -3,9 +3,12 @@ html
   head
     title ZabbixGraphViewer
     = stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true
+    = stylesheet_link_tag    "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css"
     = javascript_include_tag 'application', 'data-turbolinks-track' => true
     = javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js'
+    = javascript_include_tag "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"
     = csrf_meta_tags
 body
-  = yield
+  div.container-fluid
+    = yield
 
