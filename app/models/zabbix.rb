@@ -4,6 +4,13 @@ class Zabbix
       client.hosts.get({})
     end
 
+    def items(query = {})
+      client.client.api_request(
+        method: 'item.get',
+        params: query,
+      )
+    end
+
     def client
       @zbx ||= ZabbixApi.connect(
         :url => URI.join(Rails.application.secrets.zabbix_url, 'api_jsonrpc.php').to_s,
