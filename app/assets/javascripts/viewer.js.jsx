@@ -1,7 +1,9 @@
 var Viewer = React.createClass({
   getInitialState: function() {
     return {
-      hosts: []
+      hosts: [],
+      graphs: [],
+      periodHour: 1,
     };
   },
   componentDidMount: function() {
@@ -19,11 +21,84 @@ var Viewer = React.createClass({
       }.bind(this)
     });
   },
+  addGraph: function(items) {
+    this.setState({
+      graphs: this.state.graphs.concat({items: items}),
+    });
+  },
+  handleUpdatedPeriod: function(period) {
+    this.setState({
+      periodHour: period,
+    });
+  },
   render: function() {
     return (
       <div>
         <h1>Viewer</h1>
-        <ItemSelectorForm hosts={this.state.hosts} />
+        <PermaLink state={this.state} />
+        <TimeSelector onPeriodUpdated={this.handleUpdatedPeriod} />
+        <ItemSelectorForm hosts={this.state.hosts} addGraph={this.addGraph} />
+        <Graphs graphs={this.state.graphs} zabbixUrl={this.props.zabbixUrl} periodHour={this.state.periodHour} />
+      </div>
+    );
+  }
+});
+
+var PermaLink = React.createClass({
+  render: function() {
+    var link = $.param({
+      graphs: this.props.state.graphs,
+      periodHour: this.props.state.periodHour,
+    });
+    return (
+      <form>
+        <input value={link} />
+      </form>
+    );
+  },
+});
+
+var TimeSelector = React.createClass({
+  handleSubmit: function(e) {
+    e.preventDefault();
+    var period = parseInt(React.findDOMNode(this.refs.period).value);
+    this.props.onPeriodUpdated(period);
+  },
+  render: function() {
+    return (
+      <form onSubmit={this.handleSubmit} >
+        <input type="number" placeholder="Period (hour)" ref="period" />
+        <input type="submit" value="Update" />
+      </form>
+    );
+  },
+});
+
+var Graphs = React.createClass({
+  render: function() {
+    var graphs = this.props.graphs.map(function(graph) {
+      return (
+        <Graph graph={graph} zabbixUrl={this.props.zabbixUrl} periodHour={this.props.periodHour} />
+      );
+    }, this);
+    return (
+      <div>{graphs}</div>
+    );
+  },
+});
+
+var Graph = React.createClass({
+  render: function() {
+    var param = {
+      action: 'batchgraph',
+      graphtype: '0',
+      period: this.props.periodHour * 3600,
+      itemids: _.map(this.props.graph.items, function(item) { return item.itemid; }),
+    };
+    var src = this.props.zabbixUrl + "/chart.php?" + $.param(param);
+    return (
+      <div>
+        <img src={src} />
       </div>
     );
   }
@@ -32,71 +107,158 @@ var Viewer = React.createClass({
 var ItemSelectorForm = React.createClass({
   getInitialState: function() {
     return {
-      selectedHosts: [],
+      selectedItems: [],
       availableItems: []
     };
   },
-  loadAvailableItems: function() {
-    // this.state.selectedHosts;
-    this.setState({
-      availableItems: [{name: "cpu"}]
+  loadAvailableItems: function(hosts) {
+    var hostids = _.map(hosts, function(host) {
+      return host.hostid;
+    });
+
+    $.ajax({
+      url: '/items',
+      dataType: 'json',
+      data: {hostids: hostids},
+      success: function(items) {
+        _.each(items, function(item) {
+          item.host = _.findWhere(hosts, {hostid: item.hostid});
+        });
+        this.setState({
+          availableItems: items,
+        });
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
     });
   },
   onHostsSelected: function(hosts) {
+    this.loadAvailableItems(hosts);
+  },
+  onItemsSelected: function(items) {
     this.setState({
-      selectedHosts: hosts,
+      selectedItems: items,
     });
-
-    this.loadAvailableItems();
+  },
+  handleSubmit: function(e) {
+    e.preventDefault();
+    this.props.addGraph(this.state.selectedItems);
   },
   render: function() {
     return (
-      <form>
+      <form onSubmit={this.handleSubmit}>
         <HostSelector hosts={this.props.hosts} onHostsSelected={this.onHostsSelected} />
-        <ItemSelector items={this.state.availableItems} />
+        <ItemSelector items={this.state.availableItems} onItemsSelected={this.onItemsSelected} />
+        <input type="submit" value="Add Graph" />
       </form>
     );
   }
 });
 
+var TextFilter = React.createClass({
+  handleChange: function(e) {
+    this.props.onFilterChanged(e.target.value);
+  },
+  render: function() {
+    return (
+      <input onChange={this.handleChange} />
+    );
+  }
+});
+
 var HostSelector = React.createClass({
+  getInitialState: function() {
+    return {
+      filter: ''
+    };
+  },
   handleChange: function(e) {
     e.preventDefault();
-    var hostname = React.findDOMNode(this.refs.host).selectedOptions[0].value; // TODO: support multiple hosts
+    var hostids = _.map(e.target.selectedOptions, function(option) {
+      return option.value;
+    });
     var hosts = this.props.hosts.filter(function(host) {
-      return host.host == hostname;
+      return _.contains(hostids, host.hostid)
     });
 
     this.props.onHostsSelected(hosts);
   },
+  handleFilterChanged: function(query) {
+    this.setState({
+      filter: query,
+    });
+  },
   render: function() {
-    var hostOptions = this.props.hosts.map(function(host) {
+    var hosts = _.sortBy(this.props.hosts, function(host) {
+      return host.host;
+    });
+    if (this.state.filter != '') {
+      hosts = _.filter(hosts, function(host) {
+        return host.host.includes(this.state.filter);
+      }, this);
+    }
+    var hostOptions = _.map(hosts, function(host) {
       return (
-        <option key={host.hostid}>{host.host}</option>
+        <option key={host.hostid} value={host.hostid}>{host.host}</option>
       );
     });
     return (
-      <select size="10" onChange={this.handleChange} ref="host">
-        {hostOptions}
-      </select>
+      <div>
+        <TextFilter onFilterChanged={this.handleFilterChanged} />
+        <select size="10" onChange={this.handleChange} multiple>
+          {hostOptions}
+        </select>
+      </div>
     );
   }
 });
 
 var ItemSelector = React.createClass({
+  getInitialState: function() {
+    return {
+      filter: ''
+    };
+  },
   handleChange: function(e) {
     e.preventDefault();
+    var itemids = _.map(e.target.selectedOptions, function(option) {
+      return option.value;
+    });
+    var items = this.props.items.filter(function(item) {
+      return _.contains(itemids, item.itemid)
+    });
+    this.props.onItemsSelected(items);
+  },
+  handleFilterChanged: function(query) {
+    this.setState({
+      filter: query,
+    });
   },
   render: function() {
-    var itemOptions = this.props.items.map(function(item) {
+    var items = _.sortBy(this.props.items, function(item) {
+      return item.name;
+    });
+    if (this.state.filter != '') {
+      items = _.filter(items, function(item) {
+        return item.name.includes(this.state.filter) ||
+          item.key_.includes(this.state.filter);
+      }, this);
+    }
+    var itemOptions = _.map(items, function(item) {
       return (
-        <option key={item.name}>{item.name}</option>
+        <option key={item.itemid} value={item.itemid}>
+          {`[${item.host.host}] ${item.name} (${item.key_})`}
+        </option>
       );
     });
     return (
-      <select size="10" onChange={this.handleChange} ref="item">
-        {itemOptions}
-      </select>
+      <div>
+        <TextFilter onFilterChanged={this.handleFilterChanged} />
+        <select size="10" multiple onChange={this.handleChange}>
+          {itemOptions}
+        </select>
+      </div>
     );
   }
 });

@@ -4,6 +4,7 @@ html
     title ZabbixGraphViewer
     = stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true
     = javascript_include_tag 'application', 'data-turbolinks-track' => true
+    = javascript_include_tag 'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js'
     = csrf_meta_tags
 body
   = yield
