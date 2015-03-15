@@ -40,7 +40,6 @@ var Viewer = React.createClass({
           <ItemSelectorForm hosts={this.state.hosts} addGraph={this.addGraph} />
         </div>
         <div className="col-md-9">
-          <h1>Zabbix Graph Viewer</h1>
           <Graphs graphs={this.state.graphs} zabbixUrl={this.props.zabbixUrl} periodHour={this.state.periodHour} />
         </div>
       </div>
