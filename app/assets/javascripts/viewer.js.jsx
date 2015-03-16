@@ -33,14 +33,18 @@ var Viewer = React.createClass({
   },
   render: function() {
     return (
-      <div className="row">
-        <div className="col-md-3">
-          <TimeSelector onPeriodUpdated={this.handleUpdatedPeriod} />
-          <hr />
-          <ItemSelectorForm hosts={this.state.hosts} addGraph={this.addGraph} />
+      <div>
+        <div className="row">
+          <div className="col-md-12">
+            <TimeSelector onPeriodUpdated={this.handleUpdatedPeriod} />
+          </div>
         </div>
-        <div className="col-md-9">
-          <Graphs graphs={this.state.graphs} zabbixUrl={this.props.zabbixUrl} periodHour={this.state.periodHour} />
+        <hr />
+        <ItemSelectorForm hosts={this.state.hosts} addGraph={this.addGraph} />
+        <div className="row">
+          <div className="col-md-12">
+            <Graphs graphs={this.state.graphs} zabbixUrl={this.props.zabbixUrl} periodHour={this.state.periodHour} />
+          </div>
         </div>
       </div>
     );
@@ -153,9 +157,19 @@ var ItemSelectorForm = React.createClass({
   render: function() {
     return (
       <form onSubmit={this.handleSubmit}>
-        <HostSelector hosts={this.props.hosts} onHostsSelected={this.onHostsSelected} />
-        <ItemSelector items={this.state.availableItems} onItemsSelected={this.onItemsSelected} />
-        <input type="submit" value="Add Graph" className="btn btn-primary" />
+        <div className="row">
+          <div className="col-md-3">
+            <HostSelector hosts={this.props.hosts} onHostsSelected={this.onHostsSelected} />
+          </div>
+          <div className="col-md-9">
+            <ItemSelector items={this.state.availableItems} onItemsSelected={this.onItemsSelected} />
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-md-12">
+            <input type="submit" value="Add Graph" className="btn btn-primary" />
+          </div>
+        </div>
       </form>
     );
   }
