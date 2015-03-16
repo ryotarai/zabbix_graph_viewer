@@ -41,6 +41,7 @@ var Viewer = React.createClass({
         </div>
         <hr />
         <ItemSelectorForm hosts={this.state.hosts} addGraph={this.addGraph} />
+        <hr />
         <div className="row">
           <div className="col-md-12">
             <Graphs graphs={this.state.graphs} zabbixUrl={this.props.zabbixUrl} periodHour={this.state.periodHour} />
@@ -177,7 +178,8 @@ var ItemSelectorForm = React.createClass({
 
 var TextFilter = React.createClass({
   handleChange: function(e) {
-    this.props.onFilterChanged(e.target.value);
+    e.preventDefault();
+    this.props.onFilterChanged(e.target.value.split(" "));
   },
   render: function() {
     return (
@@ -214,7 +216,10 @@ var HostSelector = React.createClass({
     });
     if (this.state.filter != '') {
       hosts = _.filter(hosts, function(host) {
-        return host.host.includes(this.state.filter);
+        var matched = _.filter(this.state.filter, function(word) {
+          return host.host.includes(word);
+        });
+        return matched.length == this.state.filter.length;
       }, this);
     }
     var hostOptions = _.map(hosts, function(host) {
@@ -260,8 +265,11 @@ var ItemSelector = React.createClass({
     });
     if (this.state.filter != '') {
       items = _.filter(items, function(item) {
-        return item.name.includes(this.state.filter) ||
-          item.key_.includes(this.state.filter);
+        var target = `${item.name} ${item.key_}`.toLowerCase();
+        var matched = _.filter(this.state.filter, function(word) {
+          return target.includes(word);
+        });
+        return matched.length == this.state.filter.length;
       }, this);
     }
     var itemOptions = _.map(items, function(item) {
