@@ -217,7 +217,7 @@ var HostSelector = React.createClass({
     if (this.state.filter != '') {
       hosts = _.filter(hosts, function(host) {
         var matched = _.filter(this.state.filter, function(word) {
-          return host.host.includes(word);
+          return host.host.indexOf(word) !== -1;
         });
         return matched.length == this.state.filter.length;
       }, this);
@@ -267,7 +267,7 @@ var ItemSelector = React.createClass({
       items = _.filter(items, function(item) {
         var target = `${item.name} ${item.key_}`.toLowerCase();
         var matched = _.filter(this.state.filter, function(word) {
-          return target.includes(word);
+          return target.indexOf(word) !== -1;
         });
         return matched.length == this.state.filter.length;
       }, this);
